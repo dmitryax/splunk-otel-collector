@@ -110,7 +110,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-              const tagRef = "refs/tags/ansible-v${{ steps.read-galaxy-yaml.outputs.version }}"
+              const tagRef = "tags/ansible-v${{ steps.read-galaxy-yaml.outputs.version }}"
               const existingRefs = await github.git.listMatchingRefs({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -121,7 +121,7 @@ jobs:
                 await github.git.createRef({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  ref: tagRef,
+                  ref: "refs/" + tagRef,
                   sha: context.sha
                 })
               } else {
