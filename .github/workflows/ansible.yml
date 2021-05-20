@@ -111,15 +111,13 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
               const tagRef = "refs/tags/ansible-v${{ steps.read-galaxy-yaml.outputs.version }}"
-              const existingRef = await github.git.getRef({
+              const existingRefs = await github.git.listMatchingRefs({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 ref: tagRef
               })
-              console.log(existingRef)
-              if (existingRef.status === 200) {
-                console.log(tagRef + " already exists")
-              } else if (existingRef.status === 404) {
+              console.log(existingRefs)
+              if (existingRefs.data.length === 0) {
                 await github.git.createRef({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
@@ -127,6 +125,5 @@ jobs:
                   sha: context.sha
                 })
               } else {
-                console.log("Response: " + existingRef)
-                throw new Error("Failed fetch reference " + tagRef)
+                console.log(tagRef + " already exists")
               }
