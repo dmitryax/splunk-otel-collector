@@ -111,7 +111,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
               const tagRef = "refs/tags/ansible-v${{ steps.read-galaxy-yaml.outputs.version }}"
-              const existingRefs = await listMatchingRefs({
+              const existingRefs = await github.git.listMatchingRefs({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 ref: tagRef
