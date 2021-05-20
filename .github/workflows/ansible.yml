@@ -110,16 +110,19 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-              const refs = await listMatchingRefs({
+              const tagRef = "refs/tags/ansible-v${{ steps.read-galaxy-yaml.outputs.version }}"
+              const existingRefs = await listMatchingRefs({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                ref: "refs/tags/ansible-v${{ steps.read-galaxy-yaml.outputs.version }}"
+                ref: tagRef
               })
-              if (refs.length === 0) {
+              if (existingRefs.length === 0) {
                 await github.git.createRef({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  ref: "refs/tags/ansible-v${{ steps.read-galaxy-yaml.outputs.version }}",
+                  ref: tagRef,
                   sha: context.sha
                 })
+              } else {
+                console.log(tagRef + " already exists")
               }
