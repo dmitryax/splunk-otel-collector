@@ -20,6 +20,7 @@ defaults:
 jobs:
 
   lint:
+    if: 'false' ### REMOVE
     name: Lint
     runs-on: ubuntu-latest
     steps:
@@ -38,6 +39,7 @@ jobs:
         run: yamllint .
 
   test:
+    if: 'false' ### REMOVE
     name: Test
     needs: lint
     runs-on: ubuntu-latest
@@ -82,7 +84,7 @@ jobs:
           MOLECULE_DISTRO: ${{ matrix.distro }}
 
   push-release-tag:
-    needs: lint
+    # needs: test
     name: Push Release Tag
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' 
