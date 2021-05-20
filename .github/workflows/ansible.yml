@@ -116,6 +116,7 @@ jobs:
                 repo: context.repo.repo,
                 ref: tagRef
               })
+              console.log(existingRefs)
               if (existingRefs.length === 0) {
                 await github.git.createRef({
                   owner: context.repo.owner,
