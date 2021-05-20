@@ -115,7 +115,7 @@ jobs:
                 repo: context.repo.repo,
                 ref: "refs/tags/ansible-v${{ steps.read-galaxy-yaml.outputs.version }}"
               })
-              if refs.length === 0 {
+              if (refs.length === 0) {
                 await github.git.createRef({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
