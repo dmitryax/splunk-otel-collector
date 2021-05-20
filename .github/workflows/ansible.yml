@@ -82,7 +82,7 @@ jobs:
           MOLECULE_DISTRO: ${{ matrix.distro }}
 
   push-release-tag:
-    needs: test
+    needs: lint
     name: Push Release Tag
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' 
