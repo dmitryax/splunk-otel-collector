@@ -1,6 +1,8 @@
 name: zz-probe-docker
 
 on:
+  push:
+    branches: [parity-os-matrix]
   workflow_dispatch:
 
 jobs:
