@@ -1,0 +1,66 @@
+name: zz-probe-docker
+
+on:
+  workflow_dispatch:
+
+jobs:
+  mac:
+    strategy:
+      fail-fast: false
+      matrix:
+        OS: [ "macos-15", "macos-15-large" ]
+    runs-on: ${{ matrix.OS }}
+    steps:
+      - name: Report arch
+        run: uname -sm
+
+      - name: Is docker present?
+        continue-on-error: true
+        run: |
+          which docker || echo "no docker binary"
+          docker version || echo "no docker daemon"
+
+      - name: Try colima
+        continue-on-error: true
+        timeout-minutes: 20
+        run: |
+          brew install colima docker
+          colima start --cpu 3 --memory 8 --arch x86_64 --vm-type=qemu
+          docker version
+
+      - name: Run a linux/amd64 container
+        continue-on-error: true
+        timeout-minutes: 10
+        run: docker run --rm --platform linux/amd64 hello-world
+
+  win:
+    strategy:
+      fail-fast: false
+      matrix:
+        OS: [ "windows-2022", "windows-2025" ]
+    runs-on: ${{ matrix.OS }}
+    steps:
+      - name: Docker info
+        continue-on-error: true
+        run: |
+          docker version
+          docker info --format '{{.OSType}}'
+        shell: pwsh
+
+      - name: Try switching to the Linux engine
+        continue-on-error: true
+        run: |
+          & "$Env:ProgramFiles\Docker\DockerCli.exe" -SwitchLinuxEngine
+          docker info --format '{{.OSType}}'
+        shell: pwsh
+
+      - name: Run a linux/amd64 container
+        continue-on-error: true
+        timeout-minutes: 10
+        run: docker run --rm --platform linux/amd64 hello-world
+        shell: pwsh
+
+      - name: WSL available?
+        continue-on-error: true
+        run: wsl --status
+        shell: pwsh
