@@ -10,59 +10,47 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        OS: [ "macos-15", "macos-15-large" ]
-    runs-on: ${{ matrix.OS }}
+        MODE: [ "vz-native", "vz-rosetta" ]
+    runs-on: macos-15
     steps:
       - name: Report arch
         run: uname -sm
 
-      - name: Is docker present?
-        continue-on-error: true
-        run: |
-          which docker || echo "no docker binary"
-          docker version || echo "no docker daemon"
+      - name: Install colima
+        run: brew install colima docker
 
-      - name: Try colima
-        continue-on-error: true
-        timeout-minutes: 20
-        run: |
-          brew install colima docker
-          colima start --cpu 3 --memory 8 --arch x86_64 --vm-type=qemu
-          docker version
+      - name: Start colima (native arm64)
+        if: matrix.MODE == 'vz-native'
+        timeout-minutes: 15
+        run: colima start --cpu 3 --memory 10 --vm-type=vz
 
-      - name: Run a linux/amd64 container
-        continue-on-error: true
-        timeout-minutes: 10
-        run: docker run --rm --platform linux/amd64 hello-world
+      - name: Start colima (x86_64 under Rosetta)
+        if: matrix.MODE == 'vz-rosetta'
+        timeout-minutes: 15
+        run: colima start --cpu 3 --memory 10 --arch x86_64 --vm-type=vz --vz-rosetta
 
-  win:
-    strategy:
-      fail-fast: false
-      matrix:
-        OS: [ "windows-2022", "windows-2025" ]
-    runs-on: ${{ matrix.OS }}
-    steps:
-      - name: Docker info
-        continue-on-error: true
+      - name: Docker works at all?
         run: |
           docker version
-          docker info --format '{{.OSType}}'
-        shell: pwsh
+          docker info --format '{{.OSType}}/{{.Architecture}}'
+          docker run --rm hello-world
 
-      - name: Try switching to the Linux engine
-        continue-on-error: true
+      - name: Can we pull the Splunk image?
+        timeout-minutes: 15
+        run: docker pull --platform linux/amd64 splunk/splunk:9.4.4
+
+      - name: Does Splunk actually boot?
+        timeout-minutes: 25
         run: |
-          & "$Env:ProgramFiles\Docker\DockerCli.exe" -SwitchLinuxEngine
-          docker info --format '{{.OSType}}'
-        shell: pwsh
-
-      - name: Run a linux/amd64 container
-        continue-on-error: true
-        timeout-minutes: 10
-        run: docker run --rm --platform linux/amd64 hello-world
-        shell: pwsh
-
-      - name: WSL available?
-        continue-on-error: true
-        run: wsl --status
-        shell: pwsh
+          docker run -d --name splunk --platform linux/amd64 \
+            -e SPLUNK_START_ARGS=--accept-license \
+            -e SPLUNK_PASSWORD=helloworld \
+            -p 8088:8088 -p 8089:8089 splunk/splunk:9.4.4
+          start=$(date +%s)
+          until docker logs splunk 2>&1 | grep -q "Ansible playbook complete"; do
+            if [ $(( $(date +%s) - start )) -gt 1200 ]; then
+              echo "TIMEOUT after 20m"; docker logs --tail 50 splunk; exit 1
+            fi
+            sleep 15
+          done
+          echo "Splunk booted in $(( $(date +%s) - start ))s"
