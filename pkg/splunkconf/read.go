@@ -244,8 +244,7 @@ func declaredSchemes(specPath string) []string {
 		switch {
 		case trimmed == "", trimmed[0] == '#', trimmed[0] == ';':
 		case trimmed[0] == '[':
-			// splunkd ignores an indented header as an example.
-			if trimmed != line {
+			if trimmed != line { // splunkd ignores an indented header as an example.
 				continue
 			}
 			name := trimmed[1:]
